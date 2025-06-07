@@ -1,4 +1,4 @@
-from transforms import DiscreteFourierTransform, InverseDiscreteFourierTransform
+from .transforms import DiscreteFourierTransform, InverseDiscreteFourierTransform
 
 
 class LowPassFilter:
