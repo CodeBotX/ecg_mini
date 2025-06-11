@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +26,7 @@ SECRET_KEY = 'django-insecure-k4-+bfi2c@qq)x(%lv2dj*y!&v-znuoa=$=c0@@eeugada3re4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -40,6 +41,8 @@ INSTALLED_APPS = [
     'ecg_app',
     'rest_framework',
     'rest_framework_simplejwt',
+    'channels',
+    'live',
 ]
 
 MIDDLEWARE = [
@@ -122,9 +125,9 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-# Media files
+# Media files (Uploaded files)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Login URL
 LOGIN_URL = '/login/'
@@ -152,3 +155,14 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
 }
+
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
+ASGI_APPLICATION = "ecg.asgi.application" 

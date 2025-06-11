@@ -1,0 +1,74 @@
+{% extends 'ecg_app/base.html' %}
+{% load static %}
+{% block title %}Theo dõi ECG{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <h1 class="h3 mb-4 text-gray-800">Theo dõi ECG – Thiết bị {{ device.device_name }}</h1>
+
+  <!-- nút Start / Stop -->
+  <div class="mb-3">
+      <button id="startBtn" class="btn btn-success btn-sm">Start</button>
+      <button id="stopBtn"  class="btn btn-danger  btn-sm">Stop</button>
+      <span id="statusBadge" class="badge bg-secondary">Stopped</span>
+  </div>
+
+  <!-- biểu đồ -->
+  <div class="card shadow mb-4">
+      <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Biểu đồ ECG (Realtime)</h6>
+      </div>
+      <div class="card-body">
+          <canvas id="ecgChart" style="height:400px"></canvas>
+      </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const deviceId = "{{ device.device_id }}";
+const csrftoken = '{{ csrf_token }}';
+
+/* Chart khởi tạo */
+const ctx = document.getElementById('ecgChart').getContext('2d');
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: { labels: [], datasets: [{ label:'ECG', data:[], borderColor:'#4bc0c0', tension:0.1 }] },
+  options:{ animation:false, scales:{ y:{ beginAtZero:true } } }
+});
+
+/* WebSocket listen realtime */
+const wsScheme = location.protocol === "https:" ? "wss" : "ws";
+const socket = new WebSocket(`${wsScheme}://${location.host}/ws/monitor/${deviceId}/`);
+
+socket.onmessage = e=>{
+  const data = JSON.parse(e.data);
+  const labels = Array.from({length:data.length}, (_,i)=>i);
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = data;
+  chart.update('none');
+};
+
+/* Hàm POST Start / Stop */
+function toggleRecording(action){
+  fetch(`/api/device/${deviceId}/recording/`,{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'X-CSRFToken': csrftoken,
+    },
+    body: JSON.stringify({action:action})
+  })
+  .then(r=>r.json())
+  .then(json=>{
+    document.getElementById('statusBadge').textContent = json.recording ? 'Recording' : 'Stopped';
+    document.getElementById('statusBadge').className = json.recording ? 'badge bg-danger' : 'badge bg-secondary';
+  });
+}
+
+document.getElementById('startBtn').onclick = ()=>toggleRecording('start');
+document.getElementById('stopBtn').onclick  = ()=>toggleRecording('stop');
+</script>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends 'ecg_app/base.html' %}
+
+{% block title %}Danh sách thiết bị - ECG System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-4">
+                <i class="fas fa-heartbeat text-danger"></i>
+                Danh sách thiết bị của bạn
+            </h3>
+            <div class="device-list">
+                {% for device in devices %}
+                <div class="device-item">
+                    <a href="{% url 'ecg_app:monitor' device.device_id %}" class="device-link">
+                        <div class="device-icon">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <div class="device-info">
+                            <div class="device-name">{{ device.device_name }}</div>
+                            <div class="device-id">ID: {{ device.device_id }}</div>
+                        </div>
+                        <div class="device-status {% if device.is_active %}status-active{% else %}status-inactive{% endif %}">
+                            <i class="fas fa-circle"></i>
+                            {{ device.is_active|yesno:"Đang hoạt động,Đang tắt" }}
+                        </div>
+                    </a>
+                </div>
+                {% empty %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Bạn chưa có thiết bị nào.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.device-list {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.device-item {
+    margin-bottom: 15px;
+    transition: transform 0.2s;
+}
+
+.device-item:hover {
+    transform: translateX(10px);
+}
+
+.device-link {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+}
+
+.device-link:hover {
+    background: #f8f9fa;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    color: inherit;
+}
+
+.device-icon {
+    width: 50px;
+    height: 50px;
+    background: #e9ecef;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
+}
+
+.device-icon i {
+    font-size: 24px;
+    color: #dc3545;
+}
+
+.device-info {
+    flex: 1;
+}
+
+.device-name {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #212529;
+}
+
+.device-id {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.device-status {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 15px;
+    background: #f8f9fa;
+}
+
+.status-active {
+    color: #28a745;
+}
+
+.status-inactive {
+    color: #dc3545;
+}
+
+.alert {
+    border-radius: 10px;
+    padding: 15px 20px;
+}
+
+.alert i {
+    margin-right: 8px;
+}
+</style>
+{% endblock %}

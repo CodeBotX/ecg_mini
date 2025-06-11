@@ -1,0 +1,202 @@
+{% extends 'ecg_app/base.html' %}
+
+{% block title %}Lịch sử đo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Lịch sử đo</h1>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
+            <i class="fas fa-filter"></i> Lọc
+        </button>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Lọc dữ liệu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="filterForm">
+                        <div class="mb-3">
+                            <label class="form-label">Thời gian</label>
+                            <select class="form-select" name="time_range">
+                                <option value="today">Hôm nay</option>
+                                <option value="week">Tuần này</option>
+                                <option value="month">Tháng này</option>
+                                <option value="all">Tất cả</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Thiết bị</label>
+                            <select class="form-select" name="device">
+                                <option value="">Tất cả thiết bị</option>
+                                {% for device in devices %}
+                                <option value="{{ device.id }}">{{ device.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" onclick="applyFilters()">Áp dụng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Measurements List -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Thiết bị</th>
+                            <th>Nhịp tim</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for measurement in measurements %}
+                        <tr>
+                            <td>{{ measurement.timestamp|date:"d/m/Y H:i" }}</td>
+                            <td>{{ measurement.device.name }}</td>
+                            <td>{{ measurement.heart_rate }} bpm</td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="viewMeasurement({{ measurement.id }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteMeasurement({{ measurement.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">Không có dữ liệu</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Measurement Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chi tiết đo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <canvas id="ecgChart"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">Thông tin đo</h6>
+                                <p class="mb-1"><strong>Thời gian:</strong> <span id="measurementTime"></span></p>
+                                <p class="mb-1"><strong>Thiết bị:</strong> <span id="deviceName"></span></p>
+                                <p class="mb-1"><strong>Nhịp tim:</strong> <span id="heartRate"></span> bpm</p>
+                                <p class="mb-1"><strong>Trạng thái:</strong> <span id="status"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa đo này?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <form id="deleteForm" method="post" action="{% url 'ecg_app:delete_measurement' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="measurement_id" id="deleteMeasurementId">
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let ecgChart = null;
+
+function applyFilters() {
+    const form = document.getElementById('filterForm');
+    const formData = new FormData(form);
+    const params = new URLSearchParams(formData);
+    window.location.href = `{% url 'ecg_app:history' %}?${params.toString()}`;
+}
+
+function viewMeasurement(id) {
+    fetch(`/api/measurements/${id}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('measurementTime').textContent = new Date(data.timestamp).toLocaleString();
+            document.getElementById('deviceName').textContent = data.device_name;
+            document.getElementById('heartRate').textContent = data.heart_rate;
+            document.getElementById('status').textContent = data.status;
+
+            if (ecgChart) {
+                ecgChart.destroy();
+            }
+
+            const ctx = document.getElementById('ecgChart').getContext('2d');
+            ecgChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: data.ecg_data.length}, (_, i) => i),
+                    datasets: [{
+                        label: 'ECG',
+                        data: data.ecg_data,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            new bootstrap.Modal(document.getElementById('viewModal')).show();
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function deleteMeasurement(id) {
+    document.getElementById('deleteMeasurementId').value = id;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %} 

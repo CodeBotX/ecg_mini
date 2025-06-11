@@ -1,0 +1,113 @@
+{% extends 'ecg_app/base.html' %}
+
+{% block title %}Trang chủ{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Trang chủ</h1>
+
+    <!-- Thông tin tổng quan -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Tổng số đo</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_measurements }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-heartbeat fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Đo bình thường</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ normal_measurements }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Đo bất thường</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ abnormal_measurements }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Thiết bị đang kết nối</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ connected_devices }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-plug fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách thiết bị -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Thiết bị</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for device in devices %}
+                        <a href="{% url 'ecg_app:device_management' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ device.name }}</h6>
+                                <small class="text-{% if device.is_connected %}success{% else %}danger{% endif %}">
+                                    {% if device.is_connected %}Đang kết nối{% else %}Mất kết nối{% endif %}
+                                </small>
+                            </div>
+                            <p class="mb-1">ID: {{ device.device_id }}</p>
+                        </a>
+                        {% empty %}
+                        <div class="text-center py-3">
+                            <p class="mb-0">Chưa có thiết bị nào được kết nối</p>
+                            <a href="{% url 'ecg_app:device_management' %}" class="btn btn-primary btn-sm mt-2">
+                                <i class="fas fa-plus"></i> Thêm thiết bị
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

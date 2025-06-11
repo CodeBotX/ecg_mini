@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Profile, ECGData
+from .models import Profile, ECGData, Device
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -35,3 +35,14 @@ class ECGDataSerializer(serializers.ModelSerializer):
         model = ECGData
         fields = ('id', 'username', 'timestamp', 'sample_rate', 'data')
         read_only_fields = ('id', 'username')
+
+class DeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Device
+        fields = ['id', 'device_name', 'device_id', 'device_type', 'is_active', 'created_at', 'last_connected']
+        read_only_fields = ['created_at', 'last_connected']
+
+class ECGDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = ECGData
+        fields = ['timestamp', 'sample_rate', 'data']

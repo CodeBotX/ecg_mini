@@ -1,0 +1,443 @@
+{% extends 'ecg_app/base.html' %}
+
+{% block title %}Tiểu sử - ECG System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <img src="https://via.placeholder.com/150" alt="Profile" class="rounded-circle mb-3" style="width: 150px; height: 150px;">
+                    <h4>{{ request.user.get_full_name|default:request.user.username }}</h4>
+                    <p class="text-muted">{{ request.user.email }}</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                        <i class="fas fa-edit"></i> Chỉnh sửa thông tin
+                    </button>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-heartbeat text-danger"></i>
+                        Thông tin sức khỏe
+                    </h5>
+                    <div class="mt-3">
+                        <p><strong>Nhóm máu:</strong> {{ request.user.profile.blood_type|default:"Chưa cập nhật" }}</p>
+                        <p><strong>Chiều cao:</strong> {{ request.user.profile.height|default:"Chưa cập nhật" }} cm</p>
+                        <p><strong>Cân nặng:</strong> {{ request.user.profile.weight|default:"Chưa cập nhật" }} kg</p>
+                        <p><strong>BMI:</strong> {{ request.user.profile.bmi|default:"Chưa cập nhật" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title">
+                            <i class="fas fa-history text-primary"></i>
+                            Lịch sử bệnh
+                        </h5>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addMedicalHistoryModal">
+                            <i class="fas fa-plus"></i> Thêm bệnh án
+                        </button>
+                    </div>
+                    
+                    <div class="timeline">
+                        {% for history in medical_history %}
+                        <div class="timeline-item mb-4">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">{{ history.condition }}</h6>
+                                <p class="text-muted mb-1">
+                                    <i class="fas fa-calendar"></i> {{ history.date|date:"d/m/Y" }}
+                                </p>
+                                <p class="mb-1">{{ history.description }}</p>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" 
+                                            data-bs-target="#editMedicalHistoryModal"
+                                            data-history-id="{{ history.id }}"
+                                            data-condition="{{ history.condition }}"
+                                            data-date="{{ history.date|date:'Y-m-d' }}"
+                                            data-description="{{ history.description }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                                            data-bs-target="#deleteMedicalHistoryModal"
+                                            data-history-id="{{ history.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Chưa có lịch sử bệnh nào được ghi nhận.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-pills text-success"></i>
+                        Thuốc đang sử dụng
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Tên thuốc</th>
+                                    <th>Liều lượng</th>
+                                    <th>Ngày bắt đầu</th>
+                                    <th>Ngày kết thúc</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for medication in medications %}
+                                <tr>
+                                    <td>{{ medication.name }}</td>
+                                    <td>{{ medication.dosage }}</td>
+                                    <td>{{ medication.start_date|date:"d/m/Y" }}</td>
+                                    <td>{{ medication.end_date|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                                data-bs-target="#editMedicationModal"
+                                                data-medication-id="{{ medication.id }}"
+                                                data-name="{{ medication.name }}"
+                                                data-dosage="{{ medication.dosage }}"
+                                                data-start-date="{{ medication.start_date|date:'Y-m-d' }}"
+                                                data-end-date="{{ medication.end_date|date:'Y-m-d' }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                                                data-bs-target="#deleteMedicationModal"
+                                                data-medication-id="{{ medication.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">Chưa có thông tin thuốc</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addMedicationModal">
+                        <i class="fas fa-plus"></i> Thêm thuốc mới
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa thông tin cá nhân</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'ecg_app:edit_profile' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="first_name" class="form-label">Họ</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ request.user.first_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="last_name" class="form-label">Tên</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ request.user.last_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="blood_type" class="form-label">Nhóm máu</label>
+                        <select class="form-select" id="blood_type" name="blood_type">
+                            <option value="">Chọn nhóm máu</option>
+                            <option value="A+" {% if request.user.profile.blood_type == 'A+' %}selected{% endif %}>A+</option>
+                            <option value="A-" {% if request.user.profile.blood_type == 'A-' %}selected{% endif %}>A-</option>
+                            <option value="B+" {% if request.user.profile.blood_type == 'B+' %}selected{% endif %}>B+</option>
+                            <option value="B-" {% if request.user.profile.blood_type == 'B-' %}selected{% endif %}>B-</option>
+                            <option value="AB+" {% if request.user.profile.blood_type == 'AB+' %}selected{% endif %}>AB+</option>
+                            <option value="AB-" {% if request.user.profile.blood_type == 'AB-' %}selected{% endif %}>AB-</option>
+                            <option value="O+" {% if request.user.profile.blood_type == 'O+' %}selected{% endif %}>O+</option>
+                            <option value="O-" {% if request.user.profile.blood_type == 'O-' %}selected{% endif %}>O-</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="height" class="form-label">Chiều cao (cm)</label>
+                        <input type="number" class="form-control" id="height" name="height" value="{{ request.user.profile.height }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="weight" class="form-label">Cân nặng (kg)</label>
+                        <input type="number" class="form-control" id="weight" name="weight" value="{{ request.user.profile.weight }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Medical History Modal -->
+<div class="modal fade" id="addMedicalHistoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm bệnh án</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'ecg_app:add_medical_history' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="condition" class="form-label">Tên bệnh</label>
+                        <input type="text" class="form-control" id="condition" name="condition" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Ngày phát hiện</label>
+                        <input type="date" class="form-control" id="date" name="date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Thêm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Medical History Modal -->
+<div class="modal fade" id="editMedicalHistoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa bệnh án</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="editMedicalHistoryForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_condition" class="form-label">Tên bệnh</label>
+                        <input type="text" class="form-control" id="edit_condition" name="condition" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_date" class="form-label">Ngày phát hiện</label>
+                        <input type="date" class="form-control" id="edit_date" name="date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Medical History Modal -->
+<div class="modal fade" id="deleteMedicalHistoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa bệnh án này?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <form method="post" id="deleteMedicalHistoryForm" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Medication Modal -->
+<div class="modal fade" id="addMedicationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm thuốc mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'ecg_app:add_medication' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Tên thuốc</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dosage" class="form-label">Liều lượng</label>
+                        <input type="text" class="form-control" id="dosage" name="dosage" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="start_date" class="form-label">Ngày bắt đầu</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="end_date" class="form-label">Ngày kết thúc</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Thêm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Medication Modal -->
+<div class="modal fade" id="editMedicationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa thông tin thuốc</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="editMedicationForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">Tên thuốc</label>
+                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_dosage" class="form-label">Liều lượng</label>
+                        <input type="text" class="form-control" id="edit_dosage" name="dosage" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_start_date" class="form-label">Ngày bắt đầu</label>
+                        <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_end_date" class="form-label">Ngày kết thúc</label>
+                        <input type="date" class="form-control" id="edit_end_date" name="end_date">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Medication Modal -->
+<div class="modal fade" id="deleteMedicationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa thông tin thuốc này?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <form method="post" id="deleteMedicationForm" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Edit Medical History
+    const editMedicalHistoryModal = document.getElementById('editMedicalHistoryModal');
+    if (editMedicalHistoryModal) {
+        editMedicalHistoryModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const historyId = button.getAttribute('data-history-id');
+            const condition = button.getAttribute('data-condition');
+            const date = button.getAttribute('data-date');
+            const description = button.getAttribute('data-description');
+
+            const form = this.querySelector('#editMedicalHistoryForm');
+            form.action = `/profile/medical-history/${historyId}/edit/`;
+
+            this.querySelector('#edit_condition').value = condition;
+            this.querySelector('#edit_date').value = date;
+            this.querySelector('#edit_description').value = description;
+        });
+    }
+
+    // Delete Medical History
+    const deleteMedicalHistoryModal = document.getElementById('deleteMedicalHistoryModal');
+    if (deleteMedicalHistoryModal) {
+        deleteMedicalHistoryModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const historyId = button.getAttribute('data-history-id');
+            const form = this.querySelector('#deleteMedicalHistoryForm');
+            form.action = `/profile/medical-history/${historyId}/delete/`;
+        });
+    }
+
+    // Edit Medication
+    const editMedicationModal = document.getElementById('editMedicationModal');
+    if (editMedicationModal) {
+        editMedicationModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const medicationId = button.getAttribute('data-medication-id');
+            const name = button.getAttribute('data-name');
+            const dosage = button.getAttribute('data-dosage');
+            const startDate = button.getAttribute('data-start-date');
+            const endDate = button.getAttribute('data-end-date');
+
+            const form = this.querySelector('#editMedicationForm');
+            form.action = `/profile/medication/${medicationId}/edit/`;
+
+            this.querySelector('#edit_name').value = name;
+            this.querySelector('#edit_dosage').value = dosage;
+            this.querySelector('#edit_start_date').value = startDate;
+            this.querySelector('#edit_end_date').value = endDate;
+        });
+    }
+
+    // Delete Medication
+    const deleteMedicationModal = document.getElementById('deleteMedicationModal');
+    if (deleteMedicationModal) {
+        deleteMedicationModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const medicationId = button.getAttribute('data-medication-id');
+            const form = this.querySelector('#deleteMedicationForm');
+            form.action = `/profile/medication/${medicationId}/delete/`;
+        });
+    }
+});
+</script>
+{% endblock %} 
